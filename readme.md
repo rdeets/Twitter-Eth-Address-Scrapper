@@ -22,6 +22,9 @@ Made with Twitter API V2
 # Features
 
 Save and append data.<br />
+Custom search queries.<br />
+Scrape ETH Address, ENS Names, and Discord Links.<br />
+Get the wallet balance.<br />
 
 Please click the star (⭐️) button above to support my work
 
