@@ -1,5 +1,6 @@
 require('dotenv').config();
 import { ExtendedClient } from './Client';
+import { log } from 'console-styling';
 
 export const client = new ExtendedClient({
 	accessToken: `${process.env.ACCESS_TOKEN}`,
@@ -16,7 +17,8 @@ const main = async () => {
 	try {
 		await client.start();
 	} catch (error) {
-		console.log('ERROR: ', error);
+		console.log(error);
+		log(error, { preset: 'error' });
 		client.saveAllFiles();
 	}
 };

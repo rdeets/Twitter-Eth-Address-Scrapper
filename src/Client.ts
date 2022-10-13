@@ -1,12 +1,13 @@
 import {
 	TwitterApiReadOnly,
 	Tweetv2TimelineResult,
-	ApiResponseError
+	ApiResponseError,
 } from 'twitter-api-v2';
 import fs from 'fs';
 import readline from 'readline';
 import open from 'open';
 import { providers, utils } from 'ethers';
+import { log } from 'console-styling';
 
 interface Tokens {
 	accessToken: string;
@@ -18,11 +19,13 @@ interface Tokens {
 interface DiscordEntries {
 	opened: boolean;
 	userId: string;
+	url: string;
 }
 
 interface AddressEntries {
 	userId: string;
 	balance: number;
+	url: string;
 }
 
 export class ExtendedClient extends TwitterApiReadOnly {
@@ -60,15 +63,19 @@ export class ExtendedClient extends TwitterApiReadOnly {
 			JSON.stringify(Object.fromEntries(data)),
 			(err) => {
 				if (err) throw err;
-				console.log(`${data.size} entries saved to /export/${name}.json`);
+				log(`${data.size} entries saved to /export/${name}.json`, {
+					preset: 'success'
+				});
 			}
 		);
 	}
 
 	saveAllFiles() {
-		this.saveFile(this.ensNames, 'ensNames');
-		this.saveFile(this.ethAddresses, 'ethAddresses');
-		this.saveFile(this.discordLinks, 'discordLinks');
+		this.ensNames.size > 0 && this.saveFile(this.ensNames, 'ensNames');
+		this.ethAddresses.size > 0 &&
+			this.saveFile(this.ethAddresses, 'ethAddresses');
+		this.discordLinks.size > 0 &&
+			this.saveFile(this.discordLinks, 'discordLinks');
 	}
 
 	async start() {
@@ -81,7 +88,9 @@ export class ExtendedClient extends TwitterApiReadOnly {
 			this.discordLinks = this.fetchFile('discordLinks');
 
 			await this.appLogin();
-			console.log('Logged in');
+			log('Logged in', {
+				preset: 'success'
+			});
 
 			try {
 				const choice = await this.prompt(
@@ -91,19 +100,29 @@ export class ExtendedClient extends TwitterApiReadOnly {
 				if (choice == '3') return await this.filterAddresses();
 
 				await this.searchQuery();
-			} catch (e) {
-				console.error('Unable to get tweet: ', e);
+			} catch (error) {
+				log('Unable to get tweet: ' + error, {
+					preset: 'error'
+				});
 			}
 		} catch (error) {
-			console.log('Login failed: ', error);
+			log('Login failed: ' + error, {
+				preset: 'success'
+			});
 		}
 	}
 
 	async searchQuery() {
 		while (true) {
-			console.log(`${this.discordLinks.size} Total Discord URLs`);
-			console.log(`${this.ethAddresses.size} Total ETH Addresses`);
-			console.log(`${this.ensNames.size} Total ENS Names`);
+			log(`${this.discordLinks.size} Total Discord URLs`, {
+				preset: 'info'
+			});
+			log(`${this.ethAddresses.size} Total ETH Addresses`, {
+				preset: 'info'
+			});
+			log(`${this.ensNames.size} Total ENS Names`, {
+				preset: 'info'
+			});
 			this.queryInput = await this.prompt(
 				'\nEnter content or URL (q to exit) (s to save)\n->: '
 			);
@@ -119,7 +138,7 @@ export class ExtendedClient extends TwitterApiReadOnly {
 						tweet.data.conversation_id &&
 							(await this.getReplies(tweet.data.conversation_id, 1));
 					})
-					.catch((err) => console.log(err));
+					.catch((err) => log(err, { preset: 'error' }));
 			} else {
 				await this.v2
 					.search(this.queryInput, {
@@ -133,9 +152,9 @@ export class ExtendedClient extends TwitterApiReadOnly {
 						});
 					})
 					.catch((err: ApiResponseError) =>
-						console.log(
-							`Error fetching tweets: ${err.data?.title}\nCode: ${err.code}\n`
-						)
+						log(`Fetching tweets: ${err.data?.title}\nCode: ${err.code}\n`, {
+							preset: 'error'
+						})
 					);
 			}
 		}
@@ -166,15 +185,16 @@ export class ExtendedClient extends TwitterApiReadOnly {
 						!this.discordLinks.has(discordURL) &&
 						this.discordLinks.set(discordURL, {
 							opened: false,
-							userId: reply.author_id ?? 'NA'
+							userId: reply.author_id ?? 'NA',
+							url: reply.id
 						});
-
 					ethAddress &&
 						this.ethAddresses.set(ethAddress, {
 							userId: reply.author_id ?? 'NA',
 							balance: +utils.formatEther(
 								await this.provider.getBalance(ethAddress)
-							)
+							),
+							url: reply.id
 						});
 
 					ensAddress &&
@@ -182,7 +202,8 @@ export class ExtendedClient extends TwitterApiReadOnly {
 							userId: reply.author_id ?? 'NA',
 							balance: +utils.formatEther(
 								await this.provider.getBalance(ensAddress)
-							)
+							),
+							url: reply.id
 						});
 				});
 				// Check if there are more replies to loop through
@@ -194,9 +215,9 @@ export class ExtendedClient extends TwitterApiReadOnly {
 					));
 			})
 			.catch((err: ApiResponseError) =>
-				console.log(
-					`Error fetching tweets: ${err.data?.title}\nCode: ${err.code}\n`
-				)
+				log(`Fetching tweets: ${err.data?.title}\nCode: ${err.code}\n`, {
+					preset: 'error'
+				})
 			);
 	}
 
@@ -214,11 +235,11 @@ export class ExtendedClient extends TwitterApiReadOnly {
 					throw new Error('');
 
 				await open(link);
-				this.discordLinks.set(link, { opened: true, userId: data.userId });
+				this.discordLinks.set(link, { ...data, opened: true });
 			});
-			console.log('All links opened');
-		} catch (err) {
-			console.log('Finished opening links');
+			('All links opened');
+		} catch {
+			log('Finished opening links', { preset: 'success' });
 		}
 	}
 
