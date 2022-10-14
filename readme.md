@@ -30,6 +30,7 @@ Please click the star (⭐️) button above to support my work
 
 Useful resources:<br />
 [Twitter API V2](https://github.com/PLhery/node-twitter-api-v2)<br />
+[Twitter API Query](https://developer.twitter.com/en/docs/twitter-api/tweets/search/integrate/build-a-query#examples)<br />
 
 # How to setup:
 
