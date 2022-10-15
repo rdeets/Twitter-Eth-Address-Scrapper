@@ -188,7 +188,7 @@ export class ExtendedClient extends TwitterApiReadOnly {
 							userId: reply.author_id ?? 'NA',
 							url: reply.id
 						});
-					ethAddress &&
+					ethAddress && utils.isAddress(ethAddress) &&
 						this.ethAddresses.set(ethAddress, {
 							userId: reply.author_id ?? 'NA',
 							balance: +utils.formatEther(
