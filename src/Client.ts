@@ -1,7 +1,7 @@
 import {
 	TwitterApiReadOnly,
 	Tweetv2TimelineResult,
-	ApiResponseError,
+	ApiResponseError
 } from 'twitter-api-v2';
 import fs from 'fs';
 import readline from 'readline';
@@ -107,7 +107,7 @@ export class ExtendedClient extends TwitterApiReadOnly {
 			}
 		} catch (error) {
 			log('Login failed: ' + error, {
-				preset: 'success'
+				preset: 'error'
 			});
 		}
 	}
@@ -246,8 +246,8 @@ export class ExtendedClient extends TwitterApiReadOnly {
 	async filterAddresses() {
 		const minBalance = +(await this.prompt('Minimum ETH balance: '));
 		this.ethAddresses.forEach((addressEntry, address) => {
-			addressEntry.balance >= minBalance;
-			this.filteredAddresses.set(address, addressEntry);
+			addressEntry.balance >= minBalance &&
+				this.filteredAddresses.set(address, addressEntry);
 		});
 		this.saveFile(this.filteredAddresses, 'filteredAddresses');
 	}
