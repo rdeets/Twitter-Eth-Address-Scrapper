@@ -136,7 +136,7 @@ export class ExtendedClient extends TwitterApiReadOnly {
 					})
 					.then(async (tweet) => {
 						tweet.data.conversation_id &&
-							(await this.getReplies(tweet.data.conversation_id, 1));
+							(await this.getReplies(tweet.data.conversation_id));
 					})
 					.catch((err) => log(err, { preset: 'error' }));
 			} else {
@@ -148,7 +148,7 @@ export class ExtendedClient extends TwitterApiReadOnly {
 					.then(async (tweets) => {
 						tweets.tweets.forEach(async (twit) => {
 							twit.conversation_id &&
-								(await this.getReplies(twit.conversation_id, 1));
+								(await this.getReplies(twit.conversation_id));
 						});
 					})
 					.catch((err: ApiResponseError) =>
@@ -162,7 +162,7 @@ export class ExtendedClient extends TwitterApiReadOnly {
 		if (this.queryInput == 's') await this.searchQuery();
 	}
 
-	async getReplies(conversationId: string, page: number, next?: string) {
+	async getReplies(conversationId: string, page = 1, next?: string) {
 		await this.v2
 			.get<Tweetv2TimelineResult>('tweets/search/recent', {
 				query: `conversation_id: ${conversationId}`,
@@ -188,7 +188,8 @@ export class ExtendedClient extends TwitterApiReadOnly {
 							userId: reply.author_id ?? 'NA',
 							url: reply.id
 						});
-					ethAddress && utils.isAddress(ethAddress) &&
+					ethAddress &&
+						utils.isAddress(ethAddress) &&
 						this.ethAddresses.set(ethAddress, {
 							userId: reply.author_id ?? 'NA',
 							balance: +utils.formatEther(
